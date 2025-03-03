@@ -8,6 +8,9 @@ func (app *application) routes() http.Handler {
 
 	mux := http.NewServeMux()
 
+	// TODO: Find a way to use it only on handfull of requests, not all of them
+	sessMng := app.sessionManager.LoadAndSave
+
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	// NOTE: Match all path route
 	mux.Handle("GET /static/{filepath...}", http.StripPrefix("/static", fileServer))
@@ -31,5 +34,5 @@ func (app *application) routes() http.Handler {
 	// NOTE: Middleware
 	// [IN] (Log request) -> (Add Headers) -> (Serve mux)
 	// [OUT] (Recover Panic)    <-			  (Serve mux)
-	return app.recoverPanic(app.logRequest(secureHeaders(mux)))
+	return app.recoverPanic(app.logRequest(sessMng(secureHeaders(mux))))
 }
