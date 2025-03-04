@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/markaya/snippetbox/ui"
 )
 
 func (app *application) routes() http.Handler {
@@ -16,9 +18,12 @@ func (app *application) routes() http.Handler {
 	// NOTE: Protected routes
 	protected := app.requireAuthentication
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	fileServer := http.FileServer(http.FS(ui.Files))
+
 	// NOTE: Match all path route
-	mux.Handle("GET /static/{filepath...}", http.StripPrefix("/static", fileServer))
+	//
+	// NOTE: When using embeded files we do not need to strip prefix
+	mux.Handle("GET /static/{filepath...}", fileServer)
 
 	/*
 		NOTE: There is one last bit of syntax. As we showed above, patterns ending in a slash,
