@@ -9,7 +9,9 @@ func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	// TODO: Find a way to use it only on handfull of requests, not all of them
-	sessMng := app.sessionManager.LoadAndSave
+	dynamic := func(handler http.Handler) http.Handler {
+		return app.sessionManager.LoadAndSave(app.authenticate(handler))
+	}
 
 	// NOTE: Protected routes
 	protected := app.requireAuthentication
@@ -26,17 +28,17 @@ func (app *application) routes() http.Handler {
 	*/
 
 	// NOTE: Regular Session
-	mux.Handle("GET /{$}", sessMng(http.HandlerFunc(app.home)))
-	mux.Handle("GET /snippet/view/{id}", sessMng(http.HandlerFunc(app.snippetView)))
-	mux.Handle("GET /user/signup", sessMng(http.HandlerFunc(app.userSignup)))
-	mux.Handle("POST /user/signup", sessMng(http.HandlerFunc(app.userSignupPost)))
-	mux.Handle("GET /user/login", sessMng(http.HandlerFunc(app.userLogin)))
-	mux.Handle("POST /user/login", sessMng(http.HandlerFunc(app.userLoginPost)))
+	mux.Handle("GET /{$}", dynamic(http.HandlerFunc(app.home)))
+	mux.Handle("GET /snippet/view/{id}", dynamic(http.HandlerFunc(app.snippetView)))
+	mux.Handle("GET /user/signup", dynamic(http.HandlerFunc(app.userSignup)))
+	mux.Handle("POST /user/signup", dynamic(http.HandlerFunc(app.userSignupPost)))
+	mux.Handle("GET /user/login", dynamic(http.HandlerFunc(app.userLogin)))
+	mux.Handle("POST /user/login", dynamic(http.HandlerFunc(app.userLoginPost)))
 
 	// NOTE: Auth Session
-	mux.Handle("GET /snippet/create", protected(sessMng(http.HandlerFunc(app.snippetCreate))))
-	mux.Handle("POST /snippet/create", protected(sessMng(http.HandlerFunc(app.snippetCreatePost))))
-	mux.Handle("POST /user/logout", protected(sessMng(http.HandlerFunc(app.userLogoutPost))))
+	mux.Handle("GET /snippet/create", protected(dynamic(http.HandlerFunc(app.snippetCreate))))
+	mux.Handle("POST /snippet/create", protected(dynamic(http.HandlerFunc(app.snippetCreatePost))))
+	mux.Handle("POST /user/logout", protected(dynamic(http.HandlerFunc(app.userLogoutPost))))
 
 	// NOTE: How to handle a specific path with its own Middleware, not to be used
 	// on all others
@@ -50,5 +52,5 @@ func (app *application) routes() http.Handler {
 	// NOTE: Middleware
 	// [IN] (Log request) -> (Add Headers) -> (Serve mux)
 	// [OUT] (Recover Panic)    <-			  (Serve mux)
-	return app.recoverPanic(app.logRequest(sessMng(secureHeaders(mux))))
+	return app.recoverPanic(app.logRequest(dynamic(secureHeaders(mux))))
 }
