@@ -94,7 +94,8 @@ func main() {
 	tlsConfig := &tls.Config{
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 		// You can set tls version here as well
-		// MinVersion:       tls.VersionTLS12,
+		// NOTE: Enforce this so that TLS1.3 be used which enforces SameSite cookies.
+		MinVersion: tls.VersionTLS13,
 		// MaxVersion:       tls.VersionTLS13,
 		// And also Cipher suits, to only use modern ones
 		// CipherSuites: []uint16{

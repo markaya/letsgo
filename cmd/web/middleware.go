@@ -37,6 +37,11 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 	})
 }
 
+// FIXME: Proper recovery from CSRF attacks has not been implemented because of
+// an issue with justinas/nosurf library. But if you use TLS 1.3 you can avoid
+// additional CSRF security becaues TLS 1.3 enforces usage of `SameSite` cookies
+// Read more in chapter 11 of Let's Go book.
+
 // WARNING: VERY IMPORTANT: this recover panic will recover panic that happen in
 // the same goroutine that executed recoverPanic() middleware, if you have handler
 // which spins another goroutine then any panics that happen in second gorutine
