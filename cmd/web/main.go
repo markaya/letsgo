@@ -27,8 +27,8 @@ type config struct {
 type application struct {
 	errorLog       *log.Logger
 	infoLog        *log.Logger
-	snippets       *models.SnippetModel
-	users          *models.UserModel
+	snippets       models.SnipetModelInterface
+	users          models.UserModelInterface
 	templateCache  map[string]*template.Template
 	sessionManager *scs.SessionManager
 }

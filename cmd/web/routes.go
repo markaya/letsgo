@@ -32,6 +32,8 @@ func (app *application) routes() http.Handler {
 		That will match /posts/ but not /posts or /posts/234.
 	*/
 
+	mux.HandleFunc("GET /ping", ping)
+
 	// NOTE: Regular Session
 	mux.Handle("GET /{$}", dynamic(http.HandlerFunc(app.home)))
 	mux.Handle("GET /snippet/view/{id}", dynamic(http.HandlerFunc(app.snippetView)))
@@ -57,5 +59,5 @@ func (app *application) routes() http.Handler {
 	// NOTE: Middleware
 	// [IN] (Log request) -> (Add Headers) -> (Serve mux)
 	// [OUT] (Recover Panic)    <-			  (Serve mux)
-	return app.recoverPanic(app.logRequest(dynamic(secureHeaders(mux))))
+	return app.recoverPanic(app.logRequest(secureHeaders(mux)))
 }
