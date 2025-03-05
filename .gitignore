@@ -26,3 +26,4 @@ go.work.sum
 tls/
 
 *.db
+*.db*
