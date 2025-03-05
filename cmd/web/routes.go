@@ -16,7 +16,9 @@ func (app *application) routes() http.Handler {
 	}
 
 	// NOTE: Protected routes
-	protected := app.requireAuthentication
+	protected := func(handler http.Handler) http.Handler {
+		return dynamic(app.requireAuthentication(handler))
+	}
 
 	fileServer := http.FileServer(http.FS(ui.Files))
 
