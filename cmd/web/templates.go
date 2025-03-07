@@ -11,12 +11,14 @@ import (
 )
 
 type templateData struct {
-	CurrentYear     int
-	Snippet         *models.Snippet
-	Snippets        []*models.Snippet
-	Form            any
+	CurrentYear int
+	Snippet     *models.Snippet
+	Snippets    []*models.Snippet
+	Form        any
+	// TODO: Add success and fail flash.
 	Flash           string
 	IsAuthenticated bool
+	User            *models.User
 }
 
 func humanDate(t time.Time) string {
@@ -42,6 +44,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 
+		// If you do not use embedded fieles:
 		// ts, err := template.New(name).Funcs(functions).ParseFiles("./ui/html/base.tmpl.html")
 		// if err != nil {
 		// 	return nil, err

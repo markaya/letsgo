@@ -13,6 +13,8 @@ type UserModelInterface interface {
 	Insert(name, email, password string) error
 	Authenticate(email, password string) (int, error)
 	Exist(id int) (bool, error)
+	Get(id int) (*User, error)
+	UpdatePassword(id int, password string) error
 }
 
 type User struct {
@@ -27,8 +29,33 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-func (m *UserModel) Insert(name, email, password string) error {
+func (m *UserModel) Get(id int) (*User, error) {
+	u := &User{}
+	stmt := `SELECT id, name, email, created, hashed_password FROM users WHERE id = ?`
+
+	err := m.DB.QueryRow(stmt, id).
+		Scan(&u.ID, &u.Name, &u.Email, &u.Created, &u.HashedPassword)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	return u, nil
+}
+
+func HashPassword(password string) ([]byte, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 13)
+	if err != nil {
+		return nil, err
+	}
+	return hashedPassword, nil
+}
+
+func (m *UserModel) Insert(name, email, password string) error {
+	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return err
 	}
@@ -39,6 +66,29 @@ func (m *UserModel) Insert(name, email, password string) error {
 	_, err = m.DB.Exec(stmt, name, email, string(hashedPassword))
 	if err != nil {
 		sqliteErr, b := err.(sqlite3.Error)
+		if b {
+			if sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+				return ErrDuplicateEmail
+			}
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *UserModel) UpdatePassword(id int, password string) error {
+	hashedPassword, err := HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	stmt := `UPDATE users SET hashed_password=? WHERE id=?`
+
+	_, err = m.DB.Exec(stmt, string(hashedPassword), id)
+	if err != nil {
+		sqliteErr, b := err.(sqlite3.Error)
+		//TODO: Update with Erro does not exist1
 		if b {
 			if sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
 				return ErrDuplicateEmail

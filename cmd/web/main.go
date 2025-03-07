@@ -22,6 +22,8 @@ import (
 type config struct {
 	addr      string
 	staticDir string
+	debugMode bool
+	dsn       string
 }
 
 type application struct {
@@ -31,6 +33,7 @@ type application struct {
 	users          models.UserModelInterface
 	templateCache  map[string]*template.Template
 	sessionManager *scs.SessionManager
+	debugMode      bool
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -51,9 +54,12 @@ func main() {
 	var cfg config
 	flag.StringVar(&cfg.addr, "address", ":4000", "HTTP network addr")
 	flag.StringVar(&cfg.staticDir, "static-dir", "./ui/static", "Path to static assets")
-	addr := flag.String("addr", ":4000", "Http network addr")
+	flag.BoolVar(&cfg.debugMode, "debug", false, "Turn debug mode on.")
+	flag.StringVar(&cfg.dsn, "dsn", "./snippetbox.db?_busy_timeout=5000&_journal_mode=WAL", "Sqlite db string")
 
-	dsn := flag.String("dsn", "./snippetbox.db?_busy_timeout=5000&_journal_mode=WAL", "Sqlite db string")
+	// parse values into new variable
+	// addr := flag.String("addr", ":4000", "Http network addr")
+	// dsn := flag.String("dsn", "./snippetbox.db?_busy_timeout=5000&_journal_mode=WAL", "Sqlite db string")
 
 	flag.Parse()
 
@@ -62,7 +68,7 @@ func main() {
 	errorLog := log.New(os.Stderr, "[ERROR]\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// NOTE: Database
-	db, err := openDB(*dsn)
+	db, err := openDB(cfg.dsn)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -88,6 +94,7 @@ func main() {
 		users:          &models.UserModel{DB: db},
 		templateCache:  templateCache,
 		sessionManager: sessionManager,
+		debugMode:      cfg.debugMode,
 	}
 
 	// NOTE: TLS
@@ -105,7 +112,7 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:         *addr,
+		Addr:         cfg.addr,
 		ErrorLog:     errorLog,
 		Handler:      app.routes(),
 		TLSConfig:    tlsConfig,
@@ -116,7 +123,7 @@ func main() {
 		// MaxHeaderBytes:
 	}
 
-	infoLog.Printf("Starting server on %s\n", *addr)
+	infoLog.Printf("Starting server on %s\n", cfg.addr)
 	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }

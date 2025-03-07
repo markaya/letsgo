@@ -34,10 +34,11 @@ func (app *application) routes() http.Handler {
 		That will match /posts/ but not /posts or /posts/234.
 	*/
 
-	mux.HandleFunc("GET /ping", ping)
+	mux.HandleFunc("GET /ping", app.ping)
 
 	// NOTE: Regular Session
 	mux.Handle("GET /{$}", dynamic(http.HandlerFunc(app.home)))
+	mux.Handle("GET /about", dynamic(http.HandlerFunc(app.aboutView)))
 	mux.Handle("GET /snippet/view/{id}", dynamic(http.HandlerFunc(app.snippetView)))
 	mux.Handle("GET /user/signup", dynamic(http.HandlerFunc(app.userSignup)))
 	mux.Handle("POST /user/signup", dynamic(http.HandlerFunc(app.userSignupPost)))
@@ -48,6 +49,9 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /snippet/create", protected(dynamic(http.HandlerFunc(app.snippetCreate))))
 	mux.Handle("POST /snippet/create", protected(dynamic(http.HandlerFunc(app.snippetCreatePost))))
 	mux.Handle("POST /user/logout", protected(dynamic(http.HandlerFunc(app.userLogoutPost))))
+	mux.Handle("GET /account/view/", protected(dynamic(http.HandlerFunc(app.accountView))))
+	mux.Handle("GET /account/password/update", protected(dynamic(http.HandlerFunc(app.accountPasswordUpdate))))
+	mux.Handle("POST /account/password/update", protected(dynamic(http.HandlerFunc(app.accountPasswordUpdatePost))))
 
 	// NOTE: How to handle a specific path with its own Middleware, not to be used
 	// on all others

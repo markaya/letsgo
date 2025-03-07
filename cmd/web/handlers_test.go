@@ -168,9 +168,7 @@ func TestUserSignup(t *testing.T) {
 
 			assert.Equal(t, code, tt.wantCode)
 			if tt.wantFormTag != "" {
-				if tt.wantFormTag != "" {
-					assert.StringContains(t, body, tt.wantFormTag)
-				}
+				assert.StringContains(t, body, tt.wantFormTag)
 			}
 		})
 	}
